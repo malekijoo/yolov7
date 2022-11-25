@@ -58,7 +58,7 @@ def test(data,
         model = attempt_load(weights, map_location=device)  # load FP32 model
         gs = max(int(model.stride.max()), 32)  # grid size (max stride)
         imgsz = check_img_size(imgsz, s=gs)  # check img_size
-        
+
         if trace:
             model = TracedModel(model, device, imgsz)
 
@@ -83,29 +83,25 @@ def test(data,
     if wandb_logger and wandb_logger.wandb:
         log_imgs = min(wandb_logger.log_imgs, 100)
     # Dataloader
-
-    """ 
-    TODO:
-    here we should change the training dataset that we have, 
-    instead of val2017.txt because we want the boxes, objects, classes
-    of the training dataset.
-    It is fed to faster RNN or something equivalent. 
-    """
+    """ line 87
+     TODO:
+     here we should change the training dataset that we have, 
+     instead of val2017.txt because we want the boxes, objects, classes
+     of the training dataset.
+     It is fed to faster RNN or something equivalent. 
+     """
     if not training:
         if device.type != 'cpu':
             model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        """
-        we wanted to extract bonding box and ... in validation mode,
-        on training dataset. Our trick is just setting the
-        data['train'] instead of data[opt.task]. Therefore, the rest of the code
-        does not affect.
-        """
-        # task = 'train' # path to train images
-        print('task is ', task)
         dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
-
+    """ line 98
+    we wanted to extract bonding box and ... in validation mode,
+    on training dataset. Our trick is just setting the
+    data['train'] instead of data[opt.task]. Therefore, the rest of the code
+    does not affect.
+    """
     if v5_metric:
         print("Testing with YOLOv5 AP metric...")
 
@@ -117,90 +113,77 @@ def test(data,
     p, r, f1, mp, mr, map50, map, t0, t1 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class, wandb_images = [], [], [], [], []
-    # for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
-    #     print(f'\n img {img.shape}, targets {targets.shape},\
-    #     path {len(paths)}, shapes {np.array(shapes).shape}')
-    #
-    #     img = img.to(device, non_blocking=True)
-    #     img = img.half() if half else img.float()  # uint8 to fp16/32
-    #     img /= 255.0  # 0 - 255 to 0.0 - 1.0
-    #     targets = targets.to(device)
-    #     nb, _, height, width = img.shape  # batch size, channels, height, width
-    #
-    #     with torch.no_grad():
-    #         # Run model
-    #         t = time_synchronized()
-    #         out, train_out = model(img, augment=augment)  # inference and training outputs
-    #         t0 += time_synchronized() - t
+    print('dataloader ', type(dataloader))
     for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
-        if batch_i < 2:
-          img = img.to(device, non_blocking=True)
-          img = img.half() if half else img.float()  # uint8 to fp16/32
-          img /= 255.0  # 0 - 255 to 0.0 - 1.0
-          targets = targets.to(device)
-          nb, _, height, width = img.shape  # batch size, channels, height, width
+        if batch_i < 1:
+            img = img.to(device, non_blocking=True)
+            img = img.half() if half else img.float()  # uint8 to fp16/32
+            img /= 255.0  # 0 - 255 to 0.0 - 1.0
+            targets = targets.to(device)
+            nb, _, height, width = img.shape  # batch size, channels, height, width
 
-          with torch.no_grad():
-              # Run model
-              t = time_synchronized()
-              out, train_out = model(img, augment=augment)  # inference and training outputs
-              t0 += time_synchronized() - t
-              print('\n out ', out.shape)
-              print('\n train out ', [x.shape for x in train_out])
+            with torch.no_grad():
+                # Run model
+                t = time_synchronized()
+                out, train_out = model(img, augment=augment)  # inference and training outputs
+                t0 += time_synchronized() - t
+                print('\n out ', out.shape)
+                print('\n train out ', [x.shape for x in train_out])
+
+
+                """ 
+                TODO:
+                here we should call our function, 
+                we have the image, we have the box, 
+                we have the corresponding obj, and cls for each box
+            
+                faster CNN or something equivalent 
+            
+                Target [nb, cls, width, height, width, height]
+                nb is the batch number. it refers to the ith image in the batch
+                cls refers to class (person, cars, and etc)
+            
+                out tensor per image [xyxy, conf, cls]
+                """
+                # Compute loss
+                print('compute_loss = ', compute_loss)
+                if compute_loss:
+                    loss += compute_loss([x.float() for x in train_out], targets)[1][:3]  # box, obj, cls
+
+                # Run NMS
+                targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
+                lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
+                t = time_synchronized()
+                out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
+                t1 += time_synchronized() - t
+
             # Statistics per image
-          for si, pred in enumerate(out):
-              print('\n si == ', si)
-              print('pre ', pred.shape)
-        """ 
-        TODO:
-        here we should call our function, 
-        we have the image, we have the box, 
-        we have the corresponding obj, and cls for each box
+            for si, pred in enumerate(out):
+                print('\n si == ', si)
+                print('pre ', pred.shape)
+                labels = targets[targets[:, 0] == si, 1:]
+                nl = len(labels)
+                tcls = labels[:, 0].tolist() if nl else []  # target class
+                path = Path(paths[si])
+                seen += 1
 
-        faster CNN or something equivalent 
-        
-        Target [nb, cls, width, height, width, height]
-        nb is the batch number. it refers to the ith image in the batch
-        cls refers to class (person, cars, and etc)
-        
-        out tensor per image [xyxy, conf, cls]
-        """
-            # Compute loss
-        #     if compute_loss:
-        #         loss += compute_loss([x.float() for x in train_out], targets)[1][:3]  # box, obj, cls
-        #
-        #     # Run NMS
-        #     targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
-        #     lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
-        #     t = time_synchronized()
-        #     out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
-        #     t1 += time_synchronized() - t
-        #
-        # # Statistics per image
-        # for si, pred in enumerate(out):
-        #     labels = targets[targets[:, 0] == si, 1:]
-        #     nl = len(labels)
-        #     tcls = labels[:, 0].tolist() if nl else []  # target class
-        #     path = Path(paths[si])
-        #     seen += 1
-        #
-        #     if len(pred) == 0:
-        #         if nl:
-        #             stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
-        #         continue
-        #
-        #     # Predictions
-        #     predn = pred.clone()
-        #     scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
-        #
-        #     # Append to text file
-        #     if save_txt:
-        #         gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
-        #         for *xyxy, conf, cls in predn.tolist():
-        #             xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-        #             line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
-        #             with open(save_dir / 'labels' / (path.stem + '.txt'), 'a') as f:
-        #                 f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                if len(pred) == 0:
+                    if nl:
+                        stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
+                    continue
+
+                # Predictions
+                predn = pred.clone()
+                scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
+
+                # Append to text file
+                if save_txt:
+                    gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
+                    for *xyxy, conf, cls in predn.tolist():
+                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                        with open(save_dir / 'labels' / (path.stem + '.txt'), 'a') as f:
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
     #         # W&B logging - Media Panel Plots
     #         if len(wandb_images) < log_imgs and wandb_logger.current_epoch > 0:  # Check for test operation
@@ -364,29 +347,30 @@ if __name__ == '__main__':
     opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
     print(opt)
-    #check_requirements()
+    # check_requirements()
 
-    # if opt.task in ('train', 'val', 'test'):  # run normally
-    #     test(opt.data,
-    #          opt.weights,
-    #          opt.batch_size,
-    #          opt.img_size,
-    #          opt.conf_thres,
-    #          opt.iou_thres,
-    #          opt.save_json,
-    #          opt.single_cls,
-    #          opt.augment,
-    #          opt.verbose,
-    #          save_txt=opt.save_txt | opt.save_hybrid,
-    #          save_hybrid=opt.save_hybrid,
-    #          save_conf=opt.save_conf,
-    #          trace=not opt.no_trace,
-    #          v5_metric=opt.v5_metric
-    #          )
+    if opt.task in ('train', 'val', 'test'):  # run normally
+        test(opt.data,
+             opt.weights,
+             opt.batch_size,
+             opt.img_size,
+             opt.conf_thres,
+             opt.iou_thres,
+             opt.save_json,
+             opt.single_cls,
+             opt.augment,
+             opt.verbose,
+             save_txt=opt.save_txt | opt.save_hybrid,
+             save_hybrid=opt.save_hybrid,
+             save_conf=opt.save_conf,
+             trace=not opt.no_trace,
+             v5_metric=opt.v5_metric
+             )
 
     # elif opt.task == 'speed':  # speed benchmarks
     #     for w in opt.weights:
-    #         test(opt.data, w, opt.batch_size, opt.img_size, 0.25, 0.45, save_json=False, plots=False, v5_metric=opt.v5_metric)
+    #         test(opt.data, w, opt.batch_size, opt.img_size, 0.25, 0.45, save_json=False, plots=False,
+    #              v5_metric=opt.v5_metric)
     #
     # elif opt.task == 'study':  # run over a range of settings and save/plot
     #     # python test.py --task study --data coco.yaml --iou 0.65 --weights yolov7.pt
