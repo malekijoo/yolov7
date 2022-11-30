@@ -36,23 +36,6 @@ def f_ext(data,
           trace=False,
           is_coco=False
           ):
-    # data,
-    #   weights=None,
-    #   batch_size=32,
-    #   imgsz=640,
-    #   conf_thres=0.001,
-    #   iou_thres=0.6,  # for NMS
-    #   single_cls=False,
-    #   augment=False,
-    #   save_txt=False,  # for auto-labelling
-    #   model=None,
-    #   dataloader=None,
-    #   save_dir=Path(''),  # for saving images
-    #   save_hybrid=False,  # for hybrid auto-labelling
-    #   wandb_logger=None,
-    #   half_precision=True,
-    #   trace=False,
-    #   ):
 
     # Initialize/load model and set device
     training = model is not None
