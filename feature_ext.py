@@ -188,21 +188,6 @@ if __name__ == '__main__':
               trace=not opt.no_trace
               )
 
-        # opt.data,
-        #   opt.weights,
-        #   opt.batch_size,
-        #   opt.img_size,
-        #   opt.conf_thres,
-        #   opt.iou_thres,
-        #   opt.single_cls,
-        #   opt.augment,
-        #   opt.task,
-        #   opt.save_json,
-        #   opt.verbose,
-        #   save_txt=opt.save_txt | opt.save_hybrid,
-        #   save_hybrid=opt.save_hybrid,
-        #   trace=not opt.no_trace,
-        #   )
     else:
         print('This code is managed to extract features,\n'
               'for other tasks refer to the corresponding file')
