@@ -23,19 +23,40 @@ def f_ext(data,
           iou_thres=0.6,  # for NMS
           single_cls=False,
           augment=False,
-          save_txt=False,  # for auto-labelling
           model=None,
           dataloader=None,
           save_dir=Path(''),  # for saving images
+          save_txt=False,  # for auto-labelling
           save_hybrid=False,  # for hybrid auto-labelling
+          save_conf=False,  # save auto-label confidences
+          plots=True,
           wandb_logger=None,
+          compute_loss=None,
           half_precision=True,
           trace=False,
+          is_coco=False
           ):
-
+    # data,
+    #   weights=None,
+    #   batch_size=32,
+    #   imgsz=640,
+    #   conf_thres=0.001,
+    #   iou_thres=0.6,  # for NMS
+    #   single_cls=False,
+    #   augment=False,
+    #   save_txt=False,  # for auto-labelling
+    #   model=None,
+    #   dataloader=None,
+    #   save_dir=Path(''),  # for saving images
+    #   save_hybrid=False,  # for hybrid auto-labelling
+    #   wandb_logger=None,
+    #   half_precision=True,
+    #   trace=False,
+    #   ):
 
     # Initialize/load model and set device
     training = model is not None
+    print('training', training)
     if training:  # called by train.py
         device = next(model.parameters()).device  # get model device
 
@@ -155,16 +176,18 @@ if __name__ == '__main__':
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-hybrid', action='store_true', help='save label+prediction hybrid results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
-    parser.add_argument('--save-json', action='store_true', help='save a cocoapi-compatible JSON results file')
     parser.add_argument('--project', default='runs/test', help='save to project/name')
     parser.add_argument('--name', default='exp', help='save to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
     opt = parser.parse_args()
-    opt.save_json |= opt.data.endswith('coco.yaml')
+    # opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
     print(opt)
+    print(opt.save_txt)
+    print(opt.save_hybrid)
+    print(opt.save_txt | opt.save_hybrid)
     # check_requirements()
 
     if opt.task in ('train, val, test'):  # run normally
@@ -174,19 +197,32 @@ if __name__ == '__main__':
               opt.img_size,
               opt.conf_thres,
               opt.iou_thres,
-              opt.save_json,
               opt.single_cls,
-              opt.task,
               opt.augment,
-              opt.verbose,
               save_txt=opt.save_txt | opt.save_hybrid,
               save_hybrid=opt.save_hybrid,
-              trace=not opt.no_trace,
+              save_conf=opt.save_conf,
+              trace=not opt.no_trace
               )
+
+        # opt.data,
+        #   opt.weights,
+        #   opt.batch_size,
+        #   opt.img_size,
+        #   opt.conf_thres,
+        #   opt.iou_thres,
+        #   opt.single_cls,
+        #   opt.augment,
+        #   opt.task,
+        #   opt.save_json,
+        #   opt.verbose,
+        #   save_txt=opt.save_txt | opt.save_hybrid,
+        #   save_hybrid=opt.save_hybrid,
+        #   trace=not opt.no_trace,
+        #   )
     else:
         print('This code is managed to extract features,\n'
               'for other tasks refer to the corresponding file')
-
 
 """ line 98
 we wanted to extract bonding box and ... in validation mode,
@@ -196,4 +232,3 @@ does not affect.
 
 You have to pass --task train in your call line.
 """
-
