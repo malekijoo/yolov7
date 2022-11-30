@@ -21,8 +21,10 @@ def f_ext(data,
           imgsz=640,
           conf_thres=0.001,
           iou_thres=0.6,  # for NMS
+          save_json=False,
           single_cls=False,
           augment=False,
+          verbose=False,
           model=None,
           dataloader=None,
           save_dir=Path(''),  # for saving images
@@ -34,9 +36,8 @@ def f_ext(data,
           compute_loss=None,
           half_precision=True,
           trace=False,
-          is_coco=False
-          ):
-
+          is_coco=False,
+          v5_metric=False):
     # Initialize/load model and set device
     training = model is not None
     print('training', training)
@@ -167,10 +168,6 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     # opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
-    print(opt)
-    print(opt.save_txt)
-    print(opt.save_hybrid)
-    print(opt.save_txt | opt.save_hybrid)
     # check_requirements()
 
     if opt.task in ('train, val, test'):  # run normally
@@ -180,12 +177,15 @@ if __name__ == '__main__':
               opt.img_size,
               opt.conf_thres,
               opt.iou_thres,
+              opt.save_json,
               opt.single_cls,
               opt.augment,
+              opt.verbose,
               save_txt=opt.save_txt | opt.save_hybrid,
               save_hybrid=opt.save_hybrid,
               save_conf=opt.save_conf,
-              trace=not opt.no_trace
+              trace=not opt.no_trace,
+              v5_metric=opt.v5_metric
               )
 
     else:
