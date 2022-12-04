@@ -108,7 +108,8 @@ def f_ext(data,
         targets = targets.to(device)
         nb, _, height, width = img.shape  # batch size, channels, height, width
 
-        hdf5 = pd.read_hdf(hdf_pred_path)
+        if batch_i !=0:
+            hdf5 = pd.read_hdf(hdf_pred_path)
 
         with torch.no_grad():
             # Run model
@@ -126,7 +127,7 @@ def f_ext(data,
 
         # Statistics per image
         for si, pred in enumerate(out):
-            if Path(paths[si]) not in hdf5['f']:
+            if batch_i == 0:
                 labels = targets[targets[:, 0] == si, 1:]
                 nl = len(labels)
                 tcls = labels[:, 0].tolist() if nl else []  # target class
@@ -148,6 +149,29 @@ def f_ext(data,
                     store_predn(xywh, conf, names[cls], path)
 
                 store_predn.store2hdf()
+            else:
+                if Path(paths[si]) not in hdf5['path']:
+                    labels = targets[targets[:, 0] == si, 1:]
+                    nl = len(labels)
+                    tcls = labels[:, 0].tolist() if nl else []  # target class
+                    path = Path(paths[si])
+                    seen += 1
+
+                    if len(pred) == 0:
+                        if nl:
+                            stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
+                        continue
+
+                    # Predictions
+                    predn = pred.clone()
+                    scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
+
+                    gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
+                    for *xyxy, conf, cls in predn.tolist():
+                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                        store_predn(xywh, conf, names[cls], path)
+
+                    store_predn.store2hdf()
 
 
 if __name__ == '__main__':

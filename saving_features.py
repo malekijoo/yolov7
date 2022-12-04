@@ -48,17 +48,20 @@ class SavingPredictions:
 
         _dict = {}
         for sub, val in zip(self.keys, xywh):
-            _dict[sub] = val.item()
+            _dict[sub] = val
         _dict['conf'] = conf
         _dict['cls'] = cls
-        _dict['path'] = path
+        _dict['path'] = str(path)
         self.dict_list.append(_dict)
 
     def store2hdf(self):
         # Export the pandas DataFrame into HDF5
         df_final = pd.DataFrame.from_dict(self.dict_list)
         self.store = pd.HDFStore(self.hdf_path, 'a')
-        self.store.append(self.hdf_filename, df_final, data_columns=True)
+        self.store.append(self.hdf_filename,
+                          df_final,
+                          data_columns=True,
+                          min_itemsize={'path': 50, 'cls': 15})
         self.store.close()
         self.dict_list = []
 
