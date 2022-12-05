@@ -50,13 +50,14 @@ def f_ext(data,
 
     # if os.path.isdir(seen_list_path):
     #     os.mkdir(seen_list_path)
+
     seen_list_len = len(os.listdir(seen_list_path))
     if seen_list_len > 0:
         csv_list = os.listdir(seen_list_path)
-        filtered_csv_list = [os.remove(os.path.join(seen_list_path, item)) for item in csv_list
-                             if not item.endswith('.csv')]
+        filtered_csv_list = [item for item in csv_list if item.endswith('.csv')]
+        print(filtered_csv_list)
         if seen_list_len > 1:
-            seen_list = pd.concat(filtered_csv_list[0]).values.tolist()
+            seen_list = pd.concat(filtered_csv_list).values.tolist()
         else:
             seen_list = pd.read_csv(filtered_csv_list).values.tolist()
 

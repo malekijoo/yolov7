@@ -70,7 +70,7 @@ def chunking(pathdir, seen_list, seen_lists_path):
     labals_pathdir = Path(pathdir, '/labels/train2017')
 
     img = os.listdir(img_pathdir)
-    chunk_size = 1600 # 50 * batch_size 32 = 1600
+    chunk_size = 2400 # 50 * batch_size 32 = 1600
     filter_img = [x for x in img if x not in seen_list]
     rm_list = np.random.choice(filter_img, chunk_size)
     _ = [os.remove(Path(img_pathdir, x)) for x in img if x not in rm_list]
