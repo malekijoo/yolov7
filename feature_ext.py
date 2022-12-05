@@ -50,12 +50,16 @@ def f_ext(data,
 
     # if os.path.isdir(seen_list_path):
     #     os.mkdir(seen_list_path)
-
-    if len(os.listdir(seen_list_path)) > 0:
+    seen_list_len = len(os.listdir(seen_list_path))
+    if seen_list_len > 0:
         csv_list = os.listdir(seen_list_path)
         filtered_csv_list = [os.remove(os.path.join(seen_list_path, item)) for item in csv_list
                              if not item.endswith('.csv')]
-        seen_list = pd.concat(filtered_csv_list).values.tolist()
+        if seen_list_len > 1:
+            seen_list = pd.concat(filtered_csv_list[0]).values.tolist()
+        else:
+            seen_list = pd.read_csv(filtered_csv_list).values.tolist()
+
         print('number of images has been seen: ', len(seen_list))
     chunking(img_path_rm, seen_list=seen_list, seen_lists_path=seen_list_path)
 
