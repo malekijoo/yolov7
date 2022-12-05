@@ -74,7 +74,7 @@ def chunking(pathdir, seen_list, seen_lists_path):
     filter_img = [x for x in img if x not in seen_list]
     rm_list = np.random.choice(filter_img, chunk_size)
     _ = [os.remove(Path(img_pathdir, x)) for x in img if x not in rm_list]
-    _ = [os.remove(Path(labals_pathdir, x)) for x in img if x not in rm_list]
+    _ = [os.remove(Path(labals_pathdir, x.replace('jpg', 'txt'))) for x in img if x not in rm_list]
     print('chunking is done, dataframe returned')
     df = pd.DataFrame(rm_list, columns=['img'])
     filename = "seenlists_{}.csv"
