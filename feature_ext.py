@@ -45,18 +45,19 @@ def f_ext(data,
     # dataset chunking
     resultsdir = '/content/gdrive/MyDrive/results/'  # directory in google drive
     seen_list_path = Path(resultsdir, 'seenlists')
-    img_path_rm = Path('/home/yolov7/coco/images/train2017')
+    img_path_rm = Path('/home/yolov7/coco/')
     seen_list = []
 
-    if os.path.exists(seen_list_path):
-        os.mkdir(seen_list_path)
+    # if os.path.isdir(seen_list_path):
+    #     os.mkdir(seen_list_path)
 
     if len(os.listdir(seen_list_path)) > 0:
         csv_list = os.listdir(seen_list_path)
         filtered_csv_list = [os.remove(os.path.join(seen_list_path, item)) for item in csv_list
                              if not item.endswith('.csv')]
         seen_list = pd.concat(filtered_csv_list).values.tolist()
-        chunking(img_path_rm, seen_list=seen_list, seen_lists_path=seen_list_path)
+        print('number of images has been seen: ', len(seen_list))
+    chunking(img_path_rm, seen_list=seen_list, seen_lists_path=seen_list_path)
 
 
     # Initialize/load model and set device

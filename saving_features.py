@@ -63,13 +63,18 @@ class SavingPredictions:
         self.dict_list = []
 
 
-def chunking(img_pathdir, seen_list, seen_lists_path):
+def chunking(pathdir, seen_list, seen_lists_path):
     # im = tf.io.gfile.listdir(pathdir)
+
+    img_pathdir = Path(pathdir, '/images/train2017')
+    labals_pathdir = Path(pathdir, '/labels/train2017')
+
     img = os.listdir(img_pathdir)
     chunk_size = 1600 # 50 * batch_size 32 = 1600
     filter_img = [x for x in img if x not in seen_list]
     rm_list = np.random.choice(filter_img, chunk_size)
     _ = [os.remove(Path(img_pathdir, x)) for x in img if x not in rm_list]
+    _ = [os.remove(Path(labals_pathdir, x)) for x in img if x not in rm_list]
     print('chunking is done, dataframe returned')
     df = pd.DataFrame(rm_list, columns=['img'])
     filename = "seenlists_{}.csv"
