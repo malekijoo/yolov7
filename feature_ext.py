@@ -188,7 +188,7 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
-    parser.add_argument('--resultsdir', default='/content/gdrive/MyDrive/results/seenlist', help='io drive directory')
+    parser.add_argument('--resultsdir', default='/content/gdrive/MyDrive/results/', help='io drive directory')
 
     opt = parser.parse_args()
     # opt.save_json |= opt.data.endswith('coco.yaml')

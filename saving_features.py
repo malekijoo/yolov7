@@ -36,13 +36,10 @@ class SavingPredictions:
         if not os.path.exists(self.dir_path):
             os.makedirs(self.dir_path)
 
-        if os.path.exists(self.hdf_path):
-            os.remove(self.hdf_path)
-
         # initialize an HDF5
-        self.store = pd.HDFStore(self.hdf_path, mode='w')
-        self.store.close()
-
+        if not os.path.isfile(self.hdf_path):
+            self.store = pd.HDFStore(self.hdf_path, mode='w')
+            self.store.close()
 
     def __call__(self, xywh, conf, cls, path):
 
