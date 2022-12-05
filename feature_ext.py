@@ -109,7 +109,7 @@ def f_ext(data,
         dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
-    abs_dir_pred_stor = Path(resultsdir).resolve()
+    abs_dir_pred_stor = Path(resultsdir, 'hdfs')
     # hdf_pred_path = Path(abs_dir_pred_stor, 'hdf_predictions.h5')
     store_predn = SavingPredictions(abs_dir_pred_stor)
 
