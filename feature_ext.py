@@ -40,9 +40,10 @@ def f_ext(data,
           trace=False,
           is_coco=False,
           v5_metric=False,
-          resultsdir=None):
+          ):
 
     # dataset chunking
+    resultsdir = '/content/gdrive/MyDrive/results/'  # directory in google drive
     seen_list_path = Path(resultsdir, 'seenlists')
     img_path_rm = Path('/home/yolov7/coco/images/train2017')
     seen_list = []
@@ -188,7 +189,6 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
-    parser.add_argument('--resultsdir', default='/content/gdrive/MyDrive/results/', help='io drive directory')
 
     opt = parser.parse_args()
     # opt.save_json |= opt.data.endswith('coco.yaml')
