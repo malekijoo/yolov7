@@ -7,10 +7,10 @@ besides the oreder of images and its path.
 
 """
 import os
-
-import numpy as np
-import torch
 import math
+import torch
+import random
+import numpy as np
 import pandas as pd
 from pathlib import Path
 import warnings
@@ -66,9 +66,30 @@ class SavingPredictions:
         self.dict_list = []
 
 
+def chunking(img_pathdir, seen_list, seen_lists_path):
+    # im = tf.io.gfile.listdir(pathdir)
+    img = os.listdir(img_pathdir)
+    chunk_size = 1600 # 50 * batch_size 32 = 1600
+    filter_img = [x for x in img if x not in seen_list]
+    rm_list = np.random.choice(filter_img, chunk_size)
+    _ = [os.remove(Path(img_pathdir, x)) for x in img if x not in rm_list]
+    print('chunking is done, dataframe returned')
+    df = pd.DataFrame(rm_list, columns=['img'])
+    filename = "seenlists_{}.csv"
+    filename = uniqe_name(filename)
+    df.to_csv(Path(seen_lists_path, filename), index=False)
+
+
+def uniqe_name(filename):
+    counter = 0
+    while os.path.isfile(filename.format(counter)):
+        counter += 1
+    return filename.format(counter)
+
+
 if __name__ == '__main__':
 
-    # testing the module
+    # testing the SavingPredictions class
     save_path = Path('./fe/').resolve()
     h5_path = Path(save_path, 'hdf_predictions.h5')
     obj = SavingPredictions(save_path)
@@ -80,7 +101,18 @@ if __name__ == '__main__':
     obj.store2hdf()
     df2 = pd.read_hdf(h5_path)
     print('df2', df2)
-
     # df1 = pd.read_hdf(Path(save_path.resolve(), 'hdf5_predictions.h5'))
     # print("DataFrame read from the HDF5 file through pandas:")
 
+    # testing chunking function
+    # path = Path('/Users/amir/Desktop/Desktop/Picture')
+    # seen = ['04145_coloradoablaze_2880x1800.jpg',
+    #         'heath-ledger-the-joker-1920x1080-wallpaper-11056.jpg',
+    #         'Screen Shot 2019-01-10 at 3.27.27 PM.png',
+    #         'brain_microchip_circuits_128559_1920x1080.jpg',
+    #         'img.jpg',
+    #         '117_orig.jpg',
+    #         'reading-book-silhouette-24.jpg',
+    #         'v1.jpeg',
+    #         'user-birthday-5656109189693440-lawcta.gif']
+    # chunking(path, seen_list=seen)

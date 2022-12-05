@@ -1,4 +1,5 @@
 import argparse
+import os.path
 from pathlib import Path
 from threading import Thread
 import numpy as np
@@ -8,7 +9,7 @@ import torch
 import yaml
 from tqdm import tqdm
 
-from saving_features import SavingPredictions
+from saving_features import SavingPredictions, chunking
 from models.experimental import attempt_load
 from utils.datasets import create_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
@@ -38,7 +39,25 @@ def f_ext(data,
           half_precision=True,
           trace=False,
           is_coco=False,
-          v5_metric=False):
+          v5_metric=False,
+          resultsdir=None):
+
+    # dataset chunking
+    seen_list_path = Path(resultsdir, 'seenlists')
+    img_path_rm = Path('/home/yolov7/coco/images/train2017')
+    seen_list = []
+
+    if os.path.exists(seen_list_path):
+        os.mkdir(seen_list_path)
+
+    if len(os.listdir(seen_list_path)) > 0:
+        csv_list = os.listdir(seen_list_path)
+        filtered_csv_list = [os.remove(os.path.join(seen_list_path, item)) for item in csv_list
+                             if not item.endswith('.csv')]
+        seen_list = pd.concat(filtered_csv_list).values.tolist()
+        chunking(img_path_rm, seen_list=seen_list, seen_lists_path=seen_list_path)
+
+
     # Initialize/load model and set device
     training = model is not None
     print('training', training)
@@ -90,8 +109,8 @@ def f_ext(data,
         dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
-    abs_dir_pred_stor = Path('./fe/').resolve()
-    hdf_pred_path = Path(abs_dir_pred_stor, 'hdf_predictions.h5')
+    abs_dir_pred_stor = Path(resultsdir).resolve()
+    # hdf_pred_path = Path(abs_dir_pred_stor, 'hdf_predictions.h5')
     store_predn = SavingPredictions(abs_dir_pred_stor)
 
     seen = 0
@@ -108,9 +127,6 @@ def f_ext(data,
         targets = targets.to(device)
         nb, _, height, width = img.shape  # batch size, channels, height, width
 
-        if batch_i !=0:
-            hdf5 = pd.read_hdf(hdf_pred_path)
-
         with torch.no_grad():
             # Run model
             t = time_synchronized()
@@ -124,54 +140,30 @@ def f_ext(data,
             out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
 
-
         # Statistics per image
         for si, pred in enumerate(out):
-            if batch_i == 0:
-                labels = targets[targets[:, 0] == si, 1:]
-                nl = len(labels)
-                tcls = labels[:, 0].tolist() if nl else []  # target class
-                path = Path(paths[si])
-                seen += 1
 
-                if len(pred) == 0:
-                    if nl:
-                        stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
-                    continue
+            labels = targets[targets[:, 0] == si, 1:]
+            nl = len(labels)
+            tcls = labels[:, 0].tolist() if nl else []  # target class
+            path = Path(paths[si])
+            seen += 1
 
-                # Predictions
-                predn = pred.clone()
-                scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
+            if len(pred) == 0:
+                if nl:
+                    stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
+                continue
 
-                gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
-                for *xyxy, conf, cls in predn.tolist():
-                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                    store_predn(xywh, conf, names[cls], path)
+            # Predictions
+            predn = pred.clone()
+            scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
 
-                store_predn.store2hdf()
-            else:
-                if Path(paths[si]) not in hdf5['path']:
-                    labels = targets[targets[:, 0] == si, 1:]
-                    nl = len(labels)
-                    tcls = labels[:, 0].tolist() if nl else []  # target class
-                    path = Path(paths[si])
-                    seen += 1
+            gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
+            for *xyxy, conf, cls in predn.tolist():
+                xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                store_predn(xywh, conf, names[cls], path)
 
-                    if len(pred) == 0:
-                        if nl:
-                            stats.append((torch.zeros(0, niou, dtype=torch.bool), torch.Tensor(), torch.Tensor(), tcls))
-                        continue
-
-                    # Predictions
-                    predn = pred.clone()
-                    scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
-
-                    gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
-                    for *xyxy, conf, cls in predn.tolist():
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        store_predn(xywh, conf, names[cls], path)
-
-                    store_predn.store2hdf()
+            store_predn.store2hdf()
 
 
 if __name__ == '__main__':
@@ -196,6 +188,8 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
+    parser.add_argument('--resultsdir', default='/content/gdrive/MyDrive/results/seenlist', help='io drive directory')
+
     opt = parser.parse_args()
     # opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
@@ -216,7 +210,8 @@ if __name__ == '__main__':
               save_hybrid=opt.save_hybrid,
               save_conf=opt.save_conf,
               trace=not opt.no_trace,
-              v5_metric=opt.v5_metric
+              v5_metric=opt.v5_metric,
+              resultsdir=opt.resultsdir
               )
 
     else:
