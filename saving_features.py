@@ -63,12 +63,13 @@ class SavingPredictions:
         self.dict_list = []
 
 
-def chunking(pathdir, seen_list, seen_lists_path):
-    # im = tf.io.gfile.listdir(pathdir)
-
-    img_pathdir = Path(pathdir, '/images/train2017')
-    labals_pathdir = Path(pathdir, '/labels/train2017')
-
+def chunking(coco_pathdir, seen_list, seen_lists_path):
+    # im = tf.io.gfile.listdir(coco_pathdir)
+    print(coco_pathdir)
+    img_pathdir = Path(coco_pathdir, 'images/train2017')
+    print(img_pathdir)
+    labals_pathdir = Path(coco_pathdir, 'labels/train2017')
+    print(labals_pathdir)
     img = os.listdir(img_pathdir)
     chunk_size = 2400 # 50 * batch_size 32 = 1600
     filter_img = [x for x in img if x not in seen_list]

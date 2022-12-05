@@ -45,24 +45,23 @@ def f_ext(data,
     # dataset chunking
     resultsdir = '/content/gdrive/MyDrive/results/'  # directory in google drive
     seen_list_path = Path(resultsdir, 'seenlists')
-    img_path_rm = Path('/home/yolov7/coco/')
+    _coco_path = Path('/home/yolov7/coco/')
     seen_list = []
 
     # if os.path.isdir(seen_list_path):
     #     os.mkdir(seen_list_path)
 
     seen_list_len = len(os.listdir(seen_list_path))
-    if seen_list_len > 0:
-        csv_list = os.listdir(seen_list_path)
-        filtered_csv_list = [item for item in csv_list if item.endswith('.csv')]
-        print(filtered_csv_list)
-        if seen_list_len > 1:
-            seen_list = pd.concat(filtered_csv_list).values.tolist()
-        else:
-            seen_list = pd.read_csv(filtered_csv_list).values.tolist()
+    csv_list = os.listdir(seen_list_path)
+    filtered_csv_list = [item for item in csv_list if item.endswith('.csv')]
 
-        print('number of images has been seen: ', len(seen_list))
-    chunking(img_path_rm, seen_list=seen_list, seen_lists_path=seen_list_path)
+    if seen_list_len > 1:
+            seen_list = pd.concat(filtered_csv_list).values.tolist()
+    elif seen_list == 1:
+        seen_list = pd.read_csv(filtered_csv_list[0]).values.tolist()
+
+    print('number of images has been seen: ', len(seen_list))
+    chunking(_coco_path, seen_list=seen_list, seen_lists_path=seen_list_path)
 
 
     # Initialize/load model and set device
@@ -217,7 +216,6 @@ if __name__ == '__main__':
               save_conf=opt.save_conf,
               trace=not opt.no_trace,
               v5_metric=opt.v5_metric,
-              resultsdir=opt.resultsdir
               )
 
     else:
