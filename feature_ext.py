@@ -53,10 +53,10 @@ def f_ext(data,
 
     seen_list_len = len(os.listdir(seen_list_path))
     csv_list = os.listdir(seen_list_path)
-    filtered_csv_list = [item for item in csv_list if item.endswith('.csv')]
+    filtered_csv_list = [pd.read_csv(Path(seen_list_path, item)) for item in csv_list if item.endswith('.csv')]
 
     if seen_list_len > 1:
-            seen_list = pd.concat(filtered_csv_list).values.tolist()
+        seen_list = pd.concat(filtered_csv_list).values.tolist()
     elif seen_list == 1:
         seen_list = pd.read_csv(filtered_csv_list[0]).values.tolist()
 
@@ -112,8 +112,7 @@ def f_ext(data,
         if device.type != 'cpu':
             model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
-                                       prefix=colorstr(f'{task}: '))[0]
+        dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True)[0]
 
     abs_dir_pred_stor = Path(resultsdir, 'hdfs')
     # hdf_pred_path = Path(abs_dir_pred_stor, 'hdf_predictions.h5')

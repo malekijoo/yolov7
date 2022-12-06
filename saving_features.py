@@ -56,7 +56,7 @@ class SavingPredictions:
         for *xyxy, conf, cls in predn.tolist():
             xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
             line = (cls, *xywh, conf, filepath) if save_conf else (cls, *xywh)  # label format
-            with open(self.hdf_path, 'a') as f:
+            with open(str(self.hdf_path), 'a') as f:
                 f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
     def store2hdf(self):
@@ -75,6 +75,7 @@ def chunking(coco_pathdir, seen_list, seen_lists_path):
     # im = tf.io.gfile.listdir(coco_pathdir)
     print(coco_pathdir)
     img_pathdir = Path(coco_pathdir, 'images/train2017')
+    del_line_from_txt(seen_list)
     # print(img_pathdir)
     # labals_pathdir = Path(coco_pathdir, 'labels/train2017')
     # print(labals_pathdir)
@@ -89,6 +90,7 @@ def chunking(coco_pathdir, seen_list, seen_lists_path):
     filename = Path(seen_lists_path, "seenlists_{}.csv")
     filename = uniqe_name(filename)
     df.to_csv(Path(seen_lists_path, filename), index=False)
+    de
 
 
 def uniqe_name(filename):
@@ -99,6 +101,11 @@ def uniqe_name(filename):
         counter += 1
     return filename.format(counter)
 
+def del_line_from_txt(keys):
+    path = '/Users/amir/Documents/CODE/Python/yolov7/coco/train2017.txt'
+    for key in keys:
+        lines = filter(lambda x: x[0:-1] != key, open(path, "r"))
+        open(path, "w").write("".join(lines))
 
 if __name__ == '__main__':
 
