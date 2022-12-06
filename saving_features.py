@@ -97,7 +97,6 @@ def uniqe_name(filename):
     counter = 0
     filename = str(filename)
     while os.path.isfile(str(filename).format(counter)):
-        print(filename.format(counter), ' exists in files')
         counter += 1
     return filename.format(counter)
 
