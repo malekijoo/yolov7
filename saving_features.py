@@ -90,7 +90,7 @@ def chunking(coco_pathdir, seen_list, seen_lists_path):
     filename = Path(seen_lists_path, "seenlists_{}.csv")
     filename = uniqe_name(filename)
     df.to_csv(Path(seen_lists_path, filename), index=False)
-    de
+
 
 
 def uniqe_name(filename):
@@ -103,7 +103,7 @@ def uniqe_name(filename):
 def del_line_from_txt(keys):
     path = '/Users/amir/Documents/CODE/Python/yolov7/coco/train2017.txt'
     for key in keys:
-        lines = filter(lambda x: x[0:-1] != key, open(path, "r"))
+        lines = filter(lambda x: x[1:] if x.endswith(key) else '', open(path, "r"))
         open(path, "w").write("".join(lines))
 
 if __name__ == '__main__':
