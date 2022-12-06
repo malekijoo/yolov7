@@ -9,7 +9,7 @@ import torch
 import yaml
 from tqdm import tqdm
 
-from saving_features import SavingPredictions, store2cvs
+from saving_features import SavingPredictions
 from models.experimental import attempt_load
 from utils.datasets import create_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
@@ -95,7 +95,7 @@ def test(data,
             model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         # task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
         # it should increments 2400 '/content/gdrive/MyDrive/results/labels/train2017_2400.txt'
-        chunked_train2017_path = gdrive_path + 'train2017_2400.txt'
+        chunked_train2017_path = './coco/train2017.txt'
         task = 'train'
         print(chunked_train2017_path)
         dataloader = create_dataloader(chunked_train2017_path, imgsz, batch_size, gs, opt, pad=0.5, rect=True,

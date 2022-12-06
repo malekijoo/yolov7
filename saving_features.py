@@ -81,7 +81,7 @@ def chunking():
 
 
 if __name__ == '__main__':
-
+    print('hello world!')
     # testing the SavingPredictions class
     # save_path = Path('./fe/').resolve()
     # h5_path = Path(save_path, 'hdf_predictions.h5')
@@ -98,4 +98,4 @@ if __name__ == '__main__':
     # print("DataFrame read from the HDF5 file through pandas:")
 
     # testing chunking function
-    chunking()
+    # chunking()
