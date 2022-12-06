@@ -163,9 +163,7 @@ def f_ext(data,
             # Predictions
             predn = pred.clone()
             scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
-            store_predn(predn, shapes, si, txtpath, path)
-
-
+            store_predn(predn, shapes, si, path)
 
 
 if __name__ == '__main__':
