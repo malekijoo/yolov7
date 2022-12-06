@@ -15,7 +15,7 @@ import pandas as pd
 from pathlib import Path
 import warnings
 from tables import NaturalNameWarning
-
+from utils.general import xyxy2xywh
 
 warnings.filterwarnings('ignore', category=NaturalNameWarning)
 
@@ -29,7 +29,7 @@ class SavingPredictions:
 
         # all Paths
         self.dir_path = dir_path
-        self.hdf_filename = "hdf_predictions.h5"
+        self.hdf_filename = "predictions.txt"
         self.hdf_path = Path(dir_path, self.hdf_filename)
 
         # it will make a folder in the directory passed by saving path
@@ -40,16 +40,24 @@ class SavingPredictions:
         if not os.path.isfile(self.hdf_path):
             self.store = pd.HDFStore(self.hdf_path, mode='w')
             self.store.close()
+    #
+    # def __call__(self, xywh, conf, cls, path):
+    #
+    #     _dict = {}
+    #     for sub, val in zip(self.keys, xywh):
+    #         _dict[sub] = val
+    #     _dict['conf'] = conf
+    #     _dict['cls'] = cls
+    #     _dict['path'] = str(path)
+    #     self.dict_list.append(_dict)
+    def __call__(self, predn, shapes, si, filepath, save_conf=True):
 
-    def __call__(self, xywh, conf, cls, path):
-
-        _dict = {}
-        for sub, val in zip(self.keys, xywh):
-            _dict[sub] = val
-        _dict['conf'] = conf
-        _dict['cls'] = cls
-        _dict['path'] = str(path)
-        self.dict_list.append(_dict)
+        gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
+        for *xyxy, conf, cls in predn.tolist():
+            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+            line = (cls, *xywh, conf, filepath) if save_conf else (cls, *xywh)  # label format
+            with open(self.hdf_path, 'a') as f:
+                f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
     def store2hdf(self):
         # Export the pandas DataFrame into HDF5
@@ -85,8 +93,8 @@ def chunking(coco_pathdir, seen_list, seen_lists_path):
 
 def uniqe_name(filename):
     counter = 0
-
-    while os.path.isfile(filename.format(counter)):
+    filename = str(filename)
+    while os.path.isfile(str(filename).format(counter)):
         print(filename.format(counter), ' exists in files')
         counter += 1
     return filename.format(counter)

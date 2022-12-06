@@ -163,13 +163,9 @@ def f_ext(data,
             # Predictions
             predn = pred.clone()
             scale_coords(img[si].shape[1:], predn[:, :4], shapes[si][0], shapes[si][1])  # native-space pred
+            store_predn(predn, shapes, si, txtpath, path)
 
-            gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
-            for *xyxy, conf, cls in predn.tolist():
-                xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                store_predn(xywh, conf, names[cls], path)
 
-            store_predn.store2hdf()
 
 
 if __name__ == '__main__':
