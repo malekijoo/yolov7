@@ -51,12 +51,12 @@ class SavingPredictions:
     #     _dict['path'] = str(path)
     #     self.dict_list.append(_dict)
     def __call__(self, predn, shapes, si, filepath, save_conf=True):
-
+        hdf_path = str(self.hdf_path)
         gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
         for *xyxy, conf, cls in predn.tolist():
             xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
             line = (cls, *xywh, conf, filepath) if save_conf else (cls, *xywh)  # label format
-            with open(str(self.hdf_path), 'a') as f:
+            with open(hdf_path, 'a') as f:
                 f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
     def store2hdf(self):
@@ -101,10 +101,16 @@ def uniqe_name(filename):
     return filename.format(counter)
 
 def del_line_from_txt(keys):
-    path = '/Users/amir/Documents/CODE/Python/yolov7/coco/train2017.txt'
-    for key in keys:
-        lines = filter(lambda x: x[1:] if x.endswith(key) else '', open(path, "r"))
-        open(path, "w").write("".join(lines))
+    path = '/home/yolov7/coco/train2017.txt'
+    with open(path, "r") as f:
+        lines = f.readlines()
+    with open(path, "w") as f:
+        for line in lines:
+            for key in keys:
+                if line.strip("\n") != key[0]:
+                    f.write(line)
+    f.close()
+    print('deleting seen images from train.txt has been done.')
 
 if __name__ == '__main__':
 
