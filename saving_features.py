@@ -24,7 +24,7 @@ class SavingPredictions:
     def __init__(self, dir_path):
 
 
-        self.keys = ('x', 'y', 'w', 'h')
+        self.keys = ('x1', 'y1', 'x2', 'y2')
         self.dict_list = []
 
         # all Paths
@@ -43,8 +43,8 @@ class SavingPredictions:
         _dict = dict()
         gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
         for *xyxy, conf, cls in predn.tolist():
-            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-            for sub, val in zip(self.keys, xywh):
+            # xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+            for sub, val in zip(self.keys, xyxy):
                 _dict[sub] = val
             _dict['conf'] = conf
             _dict['cls'] = cls
@@ -54,7 +54,9 @@ class SavingPredictions:
     def store2cvs(self):
         # Export the pandas DataFrame into HDF5
         self.store = pd.DataFrame.from_dict(self.dict_list)
-        self.store.to_csv(self.csv_path, mode='a', header=False)
+        if not os.path.isfile(self.csv_path):
+            self.store.to_csv(self.csv_path, mode='w')
+        self.store.to_csv(self.csv_path, mode='a', index=False, header=False)
         self.dict_list = []
 
 
