@@ -56,9 +56,8 @@ class SavingPredictions:
         self.store = pd.DataFrame.from_dict(self.dict_list)
         if not os.path.isfile(self.csv_path):
             self.store.to_csv(self.csv_path, mode='w')
-        self.store.to_csv(self.csv_path, mode='a', skiprows=[0], index=False, header=False)
+        self.store.to_csv(self.csv_path, mode='a', index=False, header=False)
         self.dict_list = []
-
 
 def chunking():
 
@@ -82,22 +81,6 @@ def chunking():
 
 
 
-if __name__ == '__main__':
-    print('hello world!')
-    # testing the SavingPredictions class
-    # save_path = Path('./fe/').resolve()
-    # h5_path = Path(save_path, 'hdf_predictions.h5')
-    # obj = SavingPredictions(save_path)
-    # obj(torch.tensor([1, 2, 3, 8]), 0.3, 5, 'a')
-    # obj.store2hdf()
-    # df1 = pd.read_hdf(h5_path)
-    # obj(torch.tensor([4, 5, 6, 9]), 0.4, 2, 'b')
-    # obj(torch.tensor([7, 10, 0, 1]), 0.2, 4, 'c')
-    # obj.store2hdf()
-    # df2 = pd.read_hdf(h5_path)
-    # print('df2', df2)
-    # df1 = pd.read_hdf(Path(save_path.resolve(), 'hdf5_predictions.h5'))
-    # print("DataFrame read from the HDF5 file through pandas:")
-
+# if __name__ == '__main__':
     # testing chunking function
     # chunking()
