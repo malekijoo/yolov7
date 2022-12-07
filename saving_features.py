@@ -56,7 +56,7 @@ class SavingPredictions:
         self.store = pd.DataFrame.from_dict(self.dict_list)
         if not os.path.isfile(self.csv_path):
             self.store.to_csv(self.csv_path, mode='w')
-        self.store.to_csv(self.csv_path, mode='a', index=False, header=False)
+        self.store.to_csv(self.csv_path, mode='a', skiprows=[0], index=False, header=False)
         self.dict_list = []
 
 
