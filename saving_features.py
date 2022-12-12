@@ -41,7 +41,7 @@ class SavingPredictions:
 
     def __call__(self, predn, shapes, si, filename):
         _dict = dict()
-        gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
+        # gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
         for *xyxy, conf, cls in predn.tolist():
             # xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
             for sub, val in zip(self.keys, xyxy):
@@ -49,7 +49,7 @@ class SavingPredictions:
             _dict['conf'] = conf
             _dict['cls'] = cls
             _dict['path'] = str(filename)
-        self.dict_list.append(_dict)
+            self.dict_list.append(_dict)
 
     def store2cvs(self):
         # Export the pandas DataFrame into HDF5
