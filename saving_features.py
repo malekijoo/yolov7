@@ -49,7 +49,8 @@ class SavingPredictions:
             _dict['conf'] = conf
             _dict['cls'] = cls
             _dict['path'] = str(filename)
-            self.dict_list.append(_dict.copy())
+            if conf > 0.009:
+                self.dict_list.append(_dict.copy())
 
     def store2cvs(self):
         # Export the pandas DataFrame into HDF5
