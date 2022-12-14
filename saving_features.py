@@ -40,9 +40,10 @@ class SavingPredictions:
         self.store = None
 
     def __call__(self, predn, shapes, si, filename):
-        _dict = {}
+
         # gn = torch.tensor(shapes[si][0])[[1, 0, 1, 0]]  # normalization gain whwh
         for *xyxy, conf, cls in predn.tolist():
+            _dict = {}
             # xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
             for sub, val in zip(self.keys, xyxy):
                 _dict[sub] = val
