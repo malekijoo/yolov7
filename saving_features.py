@@ -57,7 +57,7 @@ class SavingPredictions:
         # Export the pandas DataFrame into HDF5
         self.store = pd.DataFrame.from_dict(self.dict_list)
         if not os.path.isfile(self.csv_path):
-            self.store.to_csv(self.csv_path, mode='w')
+            self.store.to_csv(self.csv_path, mode='w', index=False)
         self.store.to_csv(self.csv_path, mode='a', index=False, header=False)
         self.dict_list = []
 
