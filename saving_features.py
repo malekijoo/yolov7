@@ -50,7 +50,7 @@ class SavingPredictions:
             _dict['conf'] = conf
             _dict['cls'] = cls
             _dict['path'] = str(filename)
-            if conf > 0.09:
+            if conf > 0.19:
                 self.dict_list.append(_dict.copy())
 
     def store2cvs(self):
